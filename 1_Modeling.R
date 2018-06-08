@@ -142,6 +142,15 @@ struct_model2 <-  maxent(x=structure[[struct_best]], p = positive, a = backgroun
 
 save.image("acacia.RData")
 
+# run all combinations
+raster_list <- list(rgb, texture, structure, hyper, stack(structure, texture), stack(structure, rgb),
+                    stack(structure, hyper), stack(texture, rgb), stack(texture, hyper), 
+                    stack(structure, texture, rgb), stack(structure, texture, hyper))
+
+names(raster_list) <- c("rgb", "texture", "struct", "hyper", "strcttext", "structrgb",
+                        "structhyper", "textrgb", "texthyper",
+                        "structextrgb", "structexthyper")
+
 # Fit models
 registerDoParallel(6)
 
