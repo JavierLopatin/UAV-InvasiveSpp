@@ -122,6 +122,7 @@ GetAllAcc <- function(pattern, model="all"){
     for (i in 1:length(listNames)){ 
       # all
       all <- listt[ grep(paste0("^", paste0("eval/all/", listNames[[i]]) ), listt) ]
+      all <- sort(all)
       # overall
       all1 <- all[ -grep(paste(c("sunny", "shadows"), collapse = "|"), basename(all)) ]
       all1_acc <- iterList_all(all1, "all")
@@ -144,6 +145,7 @@ GetAllAcc <- function(pattern, model="all"){
     for (i in 1:length(listNames)){ 
       # all
       all <- listt[ grep(paste0("^", paste0("eval/sunny/", listNames[[i]]) ), listt) ]
+      all <- sort(all)
       # overall
       all1 <- all[ -grep(paste(c("sunny", "shadows"), collapse = "|"), basename(all)) ]
       all1_acc <- iterList_sunny(all1, "all")
@@ -579,6 +581,141 @@ out <- grid.arrange(p1, p2, p3, p4, p5, p6, nrow=3, ncol=2)
 ggsave("Figures/varImport.svg", out, width = 10, height = 15)
 
 ###############################
+## significance test
+
+# x: type of evaluation (1=overall; 2=sunny; 3=shadows)
+significanceTest <- function(model1, model2, x){
+  
+  listNames <- c("rgb", "texture", "struct", "hyper", "strcttext", "structrgb",
+                 "structhyper", "textrgb", "texthyper",
+                 "structextrgb", "structexthyper")
+  outall <- list()
+  for (j in 1:length(listNames)){
+    # bootstrap pair diferences
+    AUC <- model2$AUC[[j]][[x]] - model1$AUC[[j]][[x]]
+    kappa <- model2$Kappa[[j]][[x]] - model1$Kappa[[j]][[x]]
+    TPR <- model2$TPR[[j]][[x]] - model1$TPR[[j]][[x]]
+    TNR <- model2$TNR[[j]][[x]] - model1$TNR[[j]][[x]]
+    
+    # prepare output
+    output <- list(AUC, kappa, TPR, TNR)
+    
+    # matrix of significances
+    a = matrix(nrow = length(output), ncol = 3)
+    colnames(a) <- c("0.1", "0.05", "0.001")
+    rownames(a) <- c("AUC", "kappa", "TPR", "TNR")
+    for (i in 1:nrow(a)){
+      # 0.1
+      if ( sign(quantile(output[[i]], probs=c(0.1))) == sign(quantile(output[[i]], probs=c(0.9))) ){
+        a[i,1] = "True"
+      } else{
+        a[i,1] = "False"
+      }
+      # 0.05
+      if ( sign(quantile(output[[i]], probs=c(0.05))) == sign(quantile(output[[i]], probs=c(0.95))) ){
+        a[i,2] = "True"
+      } else{
+        a[i,2] = "False"
+      }
+      # 0.001
+      if ( sign(quantile(output[[i]], probs=c(0.001))) == sign(quantile(output[[i]], probs=c(0.995))) ){
+        a[i,3] = "True"
+      } else{
+        a[i,3] = "False"
+      }
+    }
+    outall[[j]] <- a
+  }
+  names(outall) <- listNames
+  outall
+}
+
+## differences at sunny canopies
+significanceTest(eval_acacia, eval_acacia2, 2)
+significanceTest(eval_ulex, eval_ulex2, 2)
+significanceTest(eval_pinus, eval_pinus2, 2)
+
+## differences at shadowed canopies
+significanceTest(eval_acacia, eval_acacia2, 3)
+significanceTest(eval_ulex, eval_ulex2, 3)
+significanceTest(eval_pinus, eval_pinus2, 3)
+
+### significance test between models
+combn(seq(1,11,1),2)
+significance_models <- function(model, x){ 
+  # see all possible combinations
+  combinations = combn(seq(1,11,1),2)
+  
+  outall <- list()
+  for (j in 1:ncol(combinations)){
+    # bootstrap pair diferences
+    AUC <- model$AUC[[combinations[,j][1]]][[x]] - model$AUC[[combinations[,j][2]]][[x]]
+    kappa <- model$Kappa[[combinations[,j][1]]][[x]] - model$Kappa[[combinations[,j][2]]][[x]]
+    TPR <- model$TPR[[combinations[,j][1]]][[x]] - model$TPR[[combinations[,j][2]]][[x]]
+    TNR <- model$TNR[[combinations[,j][1]]][[x]] - model$TNR[[combinations[,j][2]]][[x]]
+    
+    # prepare output
+    output <- list(AUC, kappa, TPR, TNR)
+    
+    # matrix of significances
+    a = matrix(nrow = length(output), ncol = 3)
+    colnames(a) <- c("0.1", "0.05", "0.001")
+    rownames(a) <- c("AUC", "kappa", "TPR", "TNR")
+    for (i in 1:nrow(a)){
+      # 0.1
+      if ( sign(quantile(output[[i]], probs=c(0.1))) == sign(quantile(output[[i]], probs=c(0.9))) ){
+        a[i,1] = "True"
+      } else{
+        a[i,1] = "False"
+      }
+      # 0.05
+      if ( sign(quantile(output[[i]], probs=c(0.05))) == sign(quantile(output[[i]], probs=c(0.95))) ){
+        a[i,2] = "True"
+      } else{
+        a[i,2] = "False"
+      }
+      # 0.001
+      if ( sign(quantile(output[[i]], probs=c(0.001))) == sign(quantile(output[[i]], probs=c(0.995))) ){
+        a[i,3] = "True"
+      } else{
+        a[i,3] = "False"
+      }
+    }
+    outall[[j]] <- a
+  }
+  auc_sig = matrix(nrow=ncol(combinations), ncol=6); colnames(auc_sig)=c("AUC", "Kappa", "TPR", "TNR", "model1", "model2")
+  for (i in 1:55){
+    # AUC
+    if (outall[[i]][1,1] == "True") auc_sig[i,1]<-1
+    if (outall[[i]][1,2] == "True") auc_sig[i,1]<-2
+    if (outall[[i]][1,3] == "True") auc_sig[i,1]<-3
+    # kappa
+    if (outall[[i]][2,1] == "True") auc_sig[i,2]<-1
+    if (outall[[i]][2,2] == "True") auc_sig[i,2]<-2
+    if (outall[[i]][2,3] == "True") auc_sig[i,2]<-3
+    # TPR
+    if (outall[[i]][3,1] == "True") auc_sig[i,3]<-1
+    if (outall[[i]][3,2] == "True") auc_sig[i,3]<-2
+    if (outall[[i]][3,3] == "True") auc_sig[i,3]<-3
+    # TNR
+    if (outall[[i]][4,1] == "True") auc_sig[i,4]<-1
+    if (outall[[i]][4,2] == "True") auc_sig[i,4]<-2
+    if (outall[[i]][4,3] == "True") auc_sig[i,4]<-3
+    # models
+    auc_sig[i,5]<-combinations[,i][1]
+    auc_sig[i,6]<-combinations[,i][2]
+  }
+  auc_sig
+}
+
+acacia_models_test <- significance_models(eval_acacia2, 2)
+ulex_models_test <- significance_models(eval_ulex2, 2)
+pinus_models_test <- significance_models(eval_pinus2, 2)
+
+pinus_models_test[grep("10", acacia_models_test[,5]),]
+
+
+###############################
 ## maps
 
 
@@ -592,26 +729,72 @@ listNames <- c("rgb", "texture", "struct", "hyper", "strcttext", "structrgb",
                "structhyper", "textrgb", "texthyper",
                "structextrgb", "structexthyper")
 
-loadRaster <- function(list){
-  load(list) 
-  img <- pred_out
-  img
+loadRaster <- function(object){
+  load(object) 
+  beginCluster(2)
+  med1 <- clusterR( stack(pred_out[[1]]), function(x) calc(x, median) )
+  med2 <- clusterR( stack(pred_out[[2]]), function(x) calc(x, median) )
+  cv1 <-  clusterR( stack(pred_out[[1]]), function(x) calc(x, cv) )
+  cv2 <-  clusterR( stack(pred_out[[2]]), function(x) calc(x, cv) )
+  endCluster()
+  out <- list(med1, med2, cv1, cv2)
+  names(out) <- c("median_all", "median_sunny", "CV_all", "CV_sunny")
+  out
 }
 
 ### acacia
-img_acacia_rgb <- loadRaster( list_acacia[ grep("/rgb_", list_acacia) ] )
-img_acacia_text <- loadRaster( list_acacia[ grep("/texture_", list_acacia) ] )
-img_acacia_struct <- loadRaster( list_acacia[ grep("/struct_", list_acacia) ] )
-img_acacia_rgb <- loadRaster( list_acacia[ grep("/rgb_", list_acacia) ] )
-img_acacia_rgb <- loadRaster( list_acacia[ grep("/rgb_", list_acacia) ] )
-img_acacia_rgb <- loadRaster( list_acacia[ grep("/rgb_", list_acacia) ] )
-img_acacia_rgb <- loadRaster( list_acacia[ grep("/rgb_", list_acacia) ] )
-img_acacia_rgb <- loadRaster( list_acacia[ grep("/rgb_", list_acacia) ] )
-img_acacia_rgb <- loadRaster( list_acacia[ grep("/rgb_", list_acacia) ] )
-img_acacia_rgb <- loadRaster( list_acacia[ grep("/rgb_", list_acacia) ] )
-img_acacia_rgb <- loadRaster( list_acacia[ grep("/rgb_", list_acacia) ] )
-img_acacia_rgb <- loadRaster( list_acacia[ grep("/rgb_", list_acacia) ] )
-img_acacia_rgb <- loadRaster( list_acacia[ grep("/rgb_", list_acacia) ] )
+acacia_med_img_all <- list()
+acacia_cv_img_all <- list()
+acacia_med_img_sunny <- list()
+acacia_cv_img_sunny <- list()
+
+for (i in 1:length(listNames)){
+  img <- loadRaster( list_acacia[ grep(paste0("/",listNames[[i]],"_"), list_acacia) ] )
+  acacia_med_img_all[[i]] <- img$median_all
+  acacia_med_img_sunny[[i]] <- img$median_sunny
+  acacia_cv_img_all[[i]] <- img$CV_all
+  acacia_cv_img_sunny[[i]] <- img$CV_sunny
+}
+names(acacia_med_img_all) <- listNames
+names(acacia_cv_img_all)  <- listNames
+names(acacia_med_img_sunny) <- listNames
+names(acacia_cv_img_sunny) <- listNames
+
+### ulex
+ulex_med_img_all <- list()
+ulex_cv_img_all <- list()
+ulex_med_img_sunny <- list()
+ulex_cv_img_sunny <- list()
+
+for (i in 1:length(listNames)){
+  img <- loadRaster( list_ulex[ grep(paste0("/",listNames[[i]],"_"), list_ulex) ] )
+  ulex_med_img_all[[i]] <- img$median_all
+  ulex_med_img_sunny[[i]] <- img$median_sunny
+  ulex_cv_img_all[[i]] <- img$CV_all
+  ulex_cv_img_sunny[[i]] <- img$CV_sunny
+}
+names(ulex_med_img_all) <- listNames
+names(ulex_cv_img_all)  <- listNames
+names(ulex_med_img_sunny) <- listNames
+names(acacia_cv_img_sunny) <- listNames
+
+### acacia
+pinus_med_img_all <- list()
+pinus_cv_img_all <- list()
+pinus_med_img_sunny <- list()
+pinus_cv_img_sunny <- list()
+
+for (i in 1:length(listNames)){
+  img <- loadRaster( list_pinus[ grep(paste0("/",listNames[[i]],"_"), list_pinus) ] )
+  pinus_med_img_all[[i]] <- img$median_all
+  pinus_med_img_sunny[[i]] <- img$median_sunny
+  pinus_cv_img_all[[i]] <- img$CV_all
+  pinus_cv_img_sunny[[i]] <- img$CV_sunny
+}
+names(pinus_med_img_all) <- listNames
+names(pinus_cv_img_all)  <- listNames
+names(pinus_med_img_sunny) <- listNames
+names(pinus_cv_img_sunny) <- listNames
 
 
 
