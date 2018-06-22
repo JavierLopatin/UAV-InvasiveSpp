@@ -718,7 +718,6 @@ pinus_models_test[grep("10", acacia_models_test[,5]),]
 ###############################
 ## maps
 
-
 listt <- list.files("H:/results2/preds", full.names = T)  
 
 list_acacia <- listt[ grep("acacia", listt) ]
@@ -796,12 +795,6 @@ names(pinus_cv_img_all)  <- listNames
 names(pinus_med_img_sunny) <- listNames
 names(pinus_cv_img_sunny) <- listNames
 
-
-
-
-
-getwd()
 save.image("Analysis.RData")
 
-### density plots
 
