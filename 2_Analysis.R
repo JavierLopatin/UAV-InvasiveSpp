@@ -12,7 +12,11 @@
 ################################################################################
 
 
-setwd("H:/results2")
+setwd("C:/Users/Lopatin/Dropbox/PhD/UAV_invasive_spp/")
+
+library("dismo")
+
+#load("Analysis.RData")
 
 #################################################
 ### Functions
@@ -103,10 +107,10 @@ GetAllAcc <- function(pattern, model="all"){
   
   # list of files matching the pattern
   if (model == "all"){
-    listt <- list.files("eval/all/", pattern=pattern, full.names = T)  
+    listt <- list.files("H:/results2/eval/all/", pattern=pattern, full.names = T)  
   }
   if (model == "sunny"){
-    listt <- list.files("eval/sunny/", pattern=pattern, full.names = T)  
+    listt <- list.files("H:/results2/eval/sunny/", pattern=pattern, full.names = T)  
   }
  
   listNames <- c("rgb_", "texture", "struct_", "hyper_", "strcttext_", "structrgb_",
@@ -121,7 +125,7 @@ GetAllAcc <- function(pattern, model="all"){
   if (model == "all"){
     for (i in 1:length(listNames)){ 
       # all
-      all <- listt[ grep(paste0("^", paste0("eval/all/", listNames[[i]]) ), listt) ]
+      all <- listt[ grep(paste0("^", paste0("H:/results2/eval/all/", listNames[[i]]) ), listt) ]
       all <- sort(all)
       # overall
       all1 <- all[ -grep(paste(c("sunny", "shadows"), collapse = "|"), basename(all)) ]
@@ -144,7 +148,7 @@ GetAllAcc <- function(pattern, model="all"){
   if (model == "sunny"){
     for (i in 1:length(listNames)){ 
       # all
-      all <- listt[ grep(paste0("^", paste0("eval/sunny/", listNames[[i]]) ), listt) ]
+      all <- listt[ grep(paste0("^", paste0("H:/results2/eval/sunny/", listNames[[i]]) ), listt) ]
       all <- sort(all)
       # overall
       all1 <- all[ -grep(paste(c("sunny", "shadows"), collapse = "|"), basename(all)) ]
@@ -184,7 +188,6 @@ eval_pinus2 <- GetAllAcc("pinus", model="sunny")
 
 
 ### Comparison between overall, sunny and shadow 
-setwd("C:/Users/Lopatin/Dropbox/PhD/UAV_invasive_spp/")
 
 # function to obtain the median and CV of the distribution of values
 getValues <- function(eval1, eval2, x){ 
@@ -444,7 +447,7 @@ dev.off()
 
 
 #############
-# get variale importance 
+# get variable importance 
 
 GetVarImp <- function(pattern, pattern2="structexthyper", model="all"){ 
   setwd("H:/results2")
@@ -797,4 +800,66 @@ names(pinus_cv_img_sunny) <- listNames
 
 save.image("Analysis.RData")
 
+###############################
+## Obtain binary maps accordint to Kappa's threshold
 
+getBinaryClassification <- function(pattern, model="all"){ 
+  # list of files matching the pattern
+  if (model == "all"){
+    list_models <- list.files("H:/results2/eval/all/", pattern=pattern, full.names = T) 
+  }
+  if (model == "sunny"){
+    list_models <- list.files("H:/results2/eval/sunny/", pattern=pattern, full.names = T) 
+  }
+  list_models <- list_models [ grep("sunny", basename(list_models)) ] 
+
+  # obtain thresholds
+  thr <- numeric()
+  for (i in 1:length(list_models)){
+    load(list_models[[i]])
+    thr[i] <- threshold(eval_sunny)[[1]]
+  }
+  
+  # apply threshold to the predictions
+  list_img = list.files("H:/results2/preds/", full.names = T)
+  img = grep(pattern, list_img)
+  load(list_img[[img]])
+  img_stack = list()
+  for (i in 1:100){ 
+    if (model == "all"){
+      pred = pred_out[[1]][[i]]
+      pred[ pred < thr[i] ] <- 0; pred[ pred > thr[i] ] <- 1
+      img_stack[[i]] <- pred
+    }
+    if (model == "sunny"){
+      pred = pred_out[[2]][[i]]
+      pred[ pred < thr[i] ] <- 0; pred[ pred > thr[i] ] <- 1
+      img_stack[[i]] <- pred
+    }
+  }
+  rm(pred_out)
+  img_stack <- stack(img_stack)
+  img_summe <- calc(img_stack, fun = sum)
+
+  return(img_summe)
+  
+}
+
+
+thr_acacia <- getBinaryClassification("structextrgb_acacia_f1", model="all")
+thr_ulex   <- getBinaryClassification("hyper_ulex_f3", model="all")
+thr_pinus  <- getBinaryClassification("structextrgb_pinus_f8", model="all")
+
+thr_acacia2 <- getBinaryClassification("structextrgb_acacia_f1", model="sunny")
+thr_ulex2   <- getBinaryClassification("hyper_ulex_f3", model="sunny")
+thr_pinus2  <- getBinaryClassification("structextrgb_pinus_f8", model="sunny")
+
+
+writeRaster(thr_acacia, filename = "H:/results2/bin_acacia_all.tif", format="GTiff", overwrite=T)
+writeRaster(thr_acacia2, filename = "H:/results2/bin_acacia_sunny.tif", format="GTiff", overwrite=T)
+
+writeRaster(thr_ulex, filename = "H:/results2/bin_ulex_all.tif", format="GTiff", overwrite=T)
+writeRaster(thr_ulex2, filename = "H:/results2/bin_ulex_sunny.tif", format="GTiff", overwrite=T)
+
+writeRaster(thr_pinus, filename = "H:/results2/bin_pinus_all.tif", format="GTiff", overwrite=T)
+writeRaster(thr_pinus2, filename = "H:/results2/bin_pinus_sunny.tif", format="GTiff", overwrite=T)
