@@ -283,169 +283,6 @@ ulexValues_shadow$cv
 pinusValues_shadow$cv
 
 
-################
-library(corrplot)
-
-##############################
-### Sunny canipies validation 
-
-AUC <- read.table("clipboard", header=T)
-kappa <- read.table("clipboard", header=T)
-TPR <- read.table("clipboard", header=T)
-TNR <- read.table("clipboard", header=T)
-# CV
-AUC2 <- read.table("clipboard", header=T)
-kappa2 <- read.table("clipboard", header=T)
-TPR2 <- read.table("clipboard", header=T)
-TNR2 <- read.table("clipboard", header=T)
-
-### plot 
-x11()
-svg(file = "Figures/corrplot_median1.svg", width=12, height=6)
-par(mfrow=c(1,4))
-corrplot( as.matrix(AUC), method = "circle", is.corr=F, col=color(100), tl.col="black", 
-          cl.lim = c(0.6, .9), cl.pos = "b")
-corrplot( as.matrix(kappa), method = "circle", is.corr=F, col=color(100), tl.col="black", 
-          cl.lim = c(.35, .75), cl.pos = "b")
-corrplot( as.matrix(TPR), method = "circle", is.corr=F, col=color(100), tl.col="black", 
-          cl.lim = c(0.5, .9), cl.pos = "b")
-corrplot( as.matrix(TNR), method = "circle", is.corr=F, col=color(100), tl.col="black", 
-          cl.lim = c(0.5, .9), cl.pos = "b")
-dev.off()
-
-x11()
-svg(file = "Figures/corrplot_cv.svg", width=12, height=6)
-par(mfrow=c(1,4))
-corrplot( as.matrix(AUC2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
-          cl.lim = c(1, 3.3), cl.pos = "b")
-corrplot( as.matrix(kappa2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
-          cl.lim = c(4, 17), cl.pos = "b")
-corrplot( as.matrix(TPR2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
-          cl.lim = c(4.5, 28), cl.pos = "b")
-corrplot( as.matrix(TNR2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
-          cl.lim = c(2, 17.5), cl.pos = "b")
-dev.off()
-
-##############################
-### Shadow canipies validation 
-
-AUC <- read.table("clipboard", header=T)
-kappa <- read.table("clipboard", header=T)
-TPR <- read.table("clipboard", header=T)
-TNR <- read.table("clipboard", header=T)
-# CV
-AUC2 <- read.table("clipboard", header=T)
-kappa2 <- read.table("clipboard", header=T)
-TPR2 <- read.table("clipboard", header=T)
-TNR2 <- read.table("clipboard", header=T)
-
-### plot 
-x11()
-svg(file = "Figures/corrplot_median_shadow.svg", width=12, height=6)
-par(mfrow=c(1,4))
-corrplot( as.matrix(AUC), method = "circle", is.corr=F, col=color(100), tl.col="black", 
-          cl.lim = c(0.2, .9), cl.pos = "b")
-corrplot( as.matrix(kappa), method = "circle", is.corr=F, col=color(100), tl.col="black", 
-          cl.lim = c(0, .3), cl.pos = "b")
-corrplot( as.matrix(TPR), method = "circle", is.corr=F, col=color(100), tl.col="black", 
-          cl.lim = c(0.1, 1), cl.pos = "b")
-corrplot( as.matrix(TNR), method = "circle", is.corr=F, col=color(100), tl.col="black", 
-          cl.lim = c(0, 1), cl.pos = "b")
-dev.off()
-
-x11()
-svg(file = "Figures/corrplot_shadow_cv.svg", width=12, height=6)
-par(mfrow=c(1,4))
-corrplot( as.matrix(AUC2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
-          cl.lim = c(2, 13), cl.pos = "b")
-corrplot( as.matrix(kappa2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
-          cl.lim = c(15, 205), cl.pos = "b")
-corrplot( as.matrix(TPR2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
-          cl.lim = c(18, 115), cl.pos = "b")
-corrplot( as.matrix(TNR2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
-          cl.lim = c(4, 225), cl.pos = "b")
-dev.off()
-##############################
-
-
-## plot functions;  n: 1 = overall, 2 = sunny, 3 = shadows
-plot_bean <- function(eval1, eval2, n, xlab="Kappa", ylim=c(0,1), ...){ 
-
-  library(beanplot)
-  # get accuracies
-  getAcc_matrix <- function(eval, n){ 
-    data = matrix(nrow = 100, ncol = length(eval))
-    for (i in 1:length(eval)){
-      data[,i] = eval[[i]][[n]] 
-    }
-    colnames(data) <-  c("rgb", "texture", "struct", "hyper", "strcttext", "structrgb",
-                         "structhyper", "textrgb", "texthyper",
-                         "structextrgb", "structexthyper")
-    stack(as.data.frame(data)) 
-  }
-  
-  data = data.frame(getAcc_matrix(eval1, n=n), getAcc_matrix(eval2, n=n)[[1]])
-  names(data) = c("all", "label", "sunny")
-  # Plot the accuracies distribution
-  par( mai = c(1, 1.3, 0.5, 0.5) )
-  beanplot(all ~ label, data=data, las=1, horizontal=T, side="first", ll=NA, beanlines="median", border = NA,
-           col="darkolivegreen", what = c(FALSE, TRUE, TRUE, TRUE), xlab=xlab, ylim=ylim, log="")
-  beanplot(sunny ~ label, data=data, las=1, horizontal=T, side="second", ll=NA, beanlines="median", border = NA,
-           col="darkolivegreen1", what = c(FALSE, TRUE, TRUE, TRUE), add=T)
-  grid()
-  # plot median values 
-  lines( x=aggregate(data$all, list(data$label), median)$x, y=seq(1,11,1), lty=1, lwd=2, las=2 )
-  lines( x=aggregate(data$sunny, list(data$label), median)$x, y=seq(1,11,1), lty=2, lwd=2, las=2 )
-  legend("bottomleft", legend = c("Overall", "Sunny"), fill=c("darkolivegreen", "darkolivegreen1"), 
-         lty=c(1,2), lwd=2, bty="n")
-}
-
-## save plots
-# AUC
-svg(file = "Figures/AUC_acacia_.svg", width=7, height=6)
-plot_bean(eval_acacia$AUC, eval_acacia2$AUC, n=1, xlab="AUC", ylim=c(0.6, 0.9))
-dev.off()
-svg(file = "Figures/AUC_ulex_all.svg", width=7, height=6)
-plot_bean(eval_ulex$AUC, eval_ulex2$AUC, n=1, xlab="AUC", ylim=c(0.6, 0.9))
-dev.off()
-svg(file = "Figures/AUC_pinus_all.svg", width=7, height=6)
-plot_bean(eval_pinus$AUC, eval_pinus2$AUC, n=1, xlab="AUC", ylim=c(0, 0.9))
-dev.off()
-
-# Kappa
-svg(file = "Figures/Kappa_acacia_all.svg", width=7, height=6)
-plot_bean(eval_acacia$Kappa, eval_acacia2$Kappa, n=1, xlab="Kappa", ylim=c(0, 0.6))
-dev.off()
-svg(file = "Figures/Kappa_ulex_all.svg", width=7, height=6)
-plot_bean(eval_ulex$Kappa, eval_ulex2$Kappa, n=1, xlab="Kappa", ylim=c(0, 0.6))
-dev.off()
-svg(file = "Figures/Kappa_pinus_all.svg", width=7, height=6)
-plot_bean(eval_pinus$Kappa, eval_pinus2$Kappa, n=1, xlab="Kappa", ylim=c(0, 0.6))
-dev.off()
-
-# TPR
-svg(file = "Figures/TPR_acacia_all.svg", width=7, height=6)
-plot_bean(eval_acacia$TPR, eval_acacia2$TPR, n=1, xlab="TPR", ylim=c(0.3, 1))
-dev.off()
-svg(file = "Figures/TPR_ulex_all.svg", width=7, height=6)
-plot_bean(eval_ulex$TPR, eval_ulex2$TPR, n=1, xlab="TPR", ylim=c(0.3, 1))
-dev.off()
-svg(file = "Figures/TPR_pinus_all.svg", width=7, height=6)
-plot_bean(eval_pinus$TPR, eval_pinus2$TPR, n=1, xlab="TPR", ylim=c(0.3, 1))
-dev.off()
-
-# TNR
-svg(file = "Figures/TNR_acacia_all.svg", width=7, height=6)
-plot_bean(eval_acacia$TNR, eval_acacia2$TNR, n=1, xlab="TNR", ylim=c(0.4, .9))
-dev.off()
-svg(file = "Figures/TNR_ulex_all.svg", width=7, height=6)
-plot_bean(eval_ulex$TNR, eval_ulex2$TNR, n=1, xlab="TNR", ylim=c(0.4, .9))
-dev.off()
-svg(file = "Figures/TNR_pinus_all.svg", width=7, height=6)
-plot_bean(eval_pinus$TNR, eval_pinus2$TNR, n=1, xlab="TNR", ylim=c(0.4, .9))
-dev.off()
-
-
 #############
 # get variable importance 
 
@@ -515,79 +352,74 @@ imp_pinus_dat = data.frame(var = colnames(imp_pinus),
                                   "Texture","Texture","Texture") )
 imp_pinus_dat$var <- gsub("*.permutation.importance","", rownames(imp_pinus_med) )
 
-##############################
-### plot varImp
-
-library(ggplot2)
-library(gridExtra)
-
-x11()
-p1 = ggplot(imp_acacia_dat, aes(x=var, y=imp_all))+
-     labs(title = "A. dealbata overall", x="Variables", y = "Importance")+
-     geom_bar(stat="identity", aes(fill = type))+
-     scale_fill_brewer(palette="Greens") + theme_classic()+
-     geom_errorbar(aes(ymin=imp_all-imp_all_sd, ymax=imp_all+imp_all_sd), width=.2,
-                   position=position_dodge(.9))+
-     theme(axis.text.x = element_text(angle = 25, hjust = 1),axis.text.y=element_text(size=14),
-           text=element_text(size=15), plot.title = element_text(size=18, hjust = .5))
-
-p2 = ggplot(imp_acacia_dat, aes(x=var, y=imp_sunny))+
-     labs(title="A. dealbata sunny",x="Variables", y = "Importance")+
-     geom_bar(stat="identity", aes(fill = type))+
-     scale_fill_brewer(palette="Greens") + theme_classic()+
-     geom_errorbar(aes(ymin=imp_sunny-imp_sunny_sd, ymax=imp_sunny+imp_sunny_sd), width=.2,
-                   position=position_dodge(.9))+
-     theme(axis.text.x = element_text(angle = 25, hjust = 1),axis.text.y=element_text(size=14),
-           text=element_text(size=15), plot.title = element_text(size=18, hjust = .5))
-
-
-p3 = ggplot(imp_ulex_dat, aes(x=var, y=imp_all))+
-     labs(title="U. europaeus overall", x="Variables", y = "Importance")+
-     geom_bar(stat="identity", aes(fill = type))+
-     scale_fill_brewer(palette="Greens") + theme_classic()+
-     geom_errorbar(aes(ymin=imp_all-imp_all_sd, ymax=imp_all+imp_all_sd), width=.2,
-                   position=position_dodge(.9))+
-     theme(axis.text.x = element_text(angle = 25, hjust = 1),axis.text.y=element_text(size=14),
-           text=element_text(size=15), plot.title = element_text(size=18, hjust = .5))
-
-
-p4 = ggplot(imp_ulex_dat, aes(x=var, y=imp_sunny))+
-     labs(title = "U. europaeus sunny", x="Variables", y = "Importance")+
-     geom_bar(stat="identity", aes(fill = type))+
-     scale_fill_brewer(palette="Greens") + theme_classic()+
-     geom_errorbar(aes(ymin=imp_sunny-imp_sunny_sd, ymax=imp_sunny+imp_sunny_sd), width=.2,
-                   position=position_dodge(.9))+
-     theme(axis.text.x = element_text(angle = 25, hjust = 1),axis.text.y=element_text(size=14),
-           text=element_text(size=15), plot.title = element_text(size=18, hjust = .5))
-
-p5 = ggplot(imp_pinus_dat, aes(x=var, y=imp_all))+
-     labs(title="P. radiata overall", x="Variables", y = "Importance")+
-     geom_bar(stat="identity", aes(fill = type))+
-     scale_fill_brewer(palette="Greens") + theme_classic()+
-     geom_errorbar(aes(ymin=imp_all-imp_all_sd, ymax=imp_all+imp_all_sd), width=.2,
-                   position=position_dodge(.9))+
-     theme(axis.text.x = element_text(angle = 25, hjust = 1),axis.text.y=element_text(size=14),
-           text=element_text(size=15), plot.title = element_text(size=18, hjust = .5))
-
-
-p6 = ggplot(imp_pinus_dat, aes(x=var, y=imp_sunny))+
-     labs(title = "P. radiata sunny", x="Variables", y = "Importance")+
-     geom_bar(stat="identity", aes(fill = type))+
-     scale_fill_brewer(palette="Greens") + theme_classic()+
-     geom_errorbar(aes(ymin=imp_sunny-imp_sunny_sd, ymax=imp_sunny+imp_sunny_sd), width=.2,
-                   position=position_dodge(.9))+
-     theme(axis.text.x = element_text(angle = 25, hjust = 1),axis.text.y=element_text(size=14),
-           text=element_text(size=15), plot.title = element_text(size=18, hjust = .5))
-
-out <- grid.arrange(p1, p2, p3, p4, p5, p6, nrow=3, ncol=2) 
-                                                                
-ggsave("Figures/varImport.svg", out, width = 10, height = 15)
 
 ###############################
 ## significance test
 
+#### First test
+
+# Differences between sunlit and shadows. 
+# Assuming that accuracies in subnlit areas are higher than in shaded areas
+significanceTest <- function(model){
+  
+  listNames <- c("rgb", "texture", "struct", "hyper", "strcttext", "structrgb",
+                 "structhyper", "textrgb", "texthyper",
+                 "structextrgb", "structexthyper")
+  outall <- list()
+  for (j in 1:length(listNames)){
+    # bootstrap pair diferences
+    AUC <- model$AUC[[j]][[2]] - model$AUC[[j]][[3]]
+    kappa <- model$Kappa[[j]][[2]] - model$Kappa[[j]][[3]]
+    TPR <- model$TPR[[j]][[2]] - model$TPR[[j]][[3]]
+    TNR <- model$TNR[[j]][[2]] - model$TNR[[j]][[3]]
+    
+    # prepare output
+    output <- list(AUC, kappa, TPR, TNR)
+    
+    # matrix of significances
+    a = matrix(nrow = length(output), ncol = 3)
+    colnames(a) <- c("0.1", "0.05", "0.001")
+    rownames(a) <- c("AUC", "kappa", "TPR", "TNR")
+    for (i in 1:nrow(a)){
+      # 0.1
+      if ( sign(quantile(output[[i]], probs=c(0.1))) == sign(quantile(output[[i]], probs=c(0.9))) ){
+        a[i,1] = "True"
+      } else{
+        a[i,1] = "False"
+      }
+      # 0.05
+      if ( sign(quantile(output[[i]], probs=c(0.05))) == sign(quantile(output[[i]], probs=c(0.95))) ){
+        a[i,2] = "True"
+      } else{
+        a[i,2] = "False"
+      }
+      # 0.001
+      if ( sign(quantile(output[[i]], probs=c(0.001))) == sign(quantile(output[[i]], probs=c(0.995))) ){
+        a[i,3] = "True"
+      } else{
+        a[i,3] = "False"
+      }
+    }
+    outall[[j]] <- a
+  }
+  names(outall) <- listNames
+  outall
+}
+
+# including shadows
+significanceTest(eval_acacia)
+significanceTest(eval_ulex)
+significanceTest(eval_pinus)
+# excluding shadows
+significanceTest(eval_acacia2)
+significanceTest(eval_ulex2)
+significanceTest(eval_pinus2)
+
+#### Second test
+
+# Differences between including or excluding shadows from the calibration data
 # x: type of evaluation (1=overall; 2=sunny; 3=shadows)
-significanceTest <- function(model1, model2, x){
+significanceTest2 <- function(model1, model2, x){
   
   listNames <- c("rgb", "texture", "struct", "hyper", "strcttext", "structrgb",
                  "structhyper", "textrgb", "texthyper",
@@ -634,14 +466,14 @@ significanceTest <- function(model1, model2, x){
 }
 
 ## differences at sunny canopies
-significanceTest(eval_acacia, eval_acacia2, 2)
-significanceTest(eval_ulex, eval_ulex2, 2)
-significanceTest(eval_pinus, eval_pinus2, 2)
+significanceTest2(eval_acacia, eval_acacia2, 2)
+significanceTest2(eval_ulex, eval_ulex2, 2)
+significanceTest2(eval_pinus, eval_pinus2, 2)
 
 ## differences at shadowed canopies
-significanceTest(eval_acacia, eval_acacia2, 3)
-significanceTest(eval_ulex, eval_ulex2, 3)
-significanceTest(eval_pinus, eval_pinus2, 3)
+significanceTest2(eval_acacia, eval_acacia2, 3)
+significanceTest2(eval_ulex, eval_ulex2, 3)
+significanceTest2(eval_pinus, eval_pinus2, 3)
 
 ### significance test between models
 combn(seq(1,11,1),2)
@@ -863,3 +695,238 @@ writeRaster(thr_ulex2, filename = "H:/results2/bin_ulex_sunny.tif", format="GTif
 
 writeRaster(thr_pinus, filename = "H:/results2/bin_pinus_all.tif", format="GTiff", overwrite=T)
 writeRaster(thr_pinus2, filename = "H:/results2/bin_pinus_sunny.tif", format="GTiff", overwrite=T)
+
+
+#############
+### Plots ###
+#############
+
+################
+library(corrplot)
+
+##############################
+### Sunny canopy validation 
+
+AUC <- read.table("clipboard", header=T)
+kappa <- read.table("clipboard", header=T)
+TPR <- read.table("clipboard", header=T)
+TNR <- read.table("clipboard", header=T)
+# CV
+AUC2 <- read.table("clipboard", header=T)
+kappa2 <- read.table("clipboard", header=T)
+TPR2 <- read.table("clipboard", header=T)
+TNR2 <- read.table("clipboard", header=T)
+
+### plot 
+x11()
+svg(file = "Figures/corrplot_median1.svg", width=12, height=6)
+par(mfrow=c(1,4))
+corrplot( as.matrix(AUC), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+          cl.lim = c(0.6, .9), cl.pos = "b")
+corrplot( as.matrix(kappa), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+          cl.lim = c(.35, .75), cl.pos = "b")
+corrplot( as.matrix(TPR), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+          cl.lim = c(0.5, .9), cl.pos = "b")
+corrplot( as.matrix(TNR), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+          cl.lim = c(0.5, .9), cl.pos = "b")
+dev.off()
+
+x11()
+svg(file = "Figures/corrplot_cv.svg", width=12, height=6)
+par(mfrow=c(1,4))
+corrplot( as.matrix(AUC2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+          cl.lim = c(1, 3.3), cl.pos = "b")
+corrplot( as.matrix(kappa2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+          cl.lim = c(4, 17), cl.pos = "b")
+corrplot( as.matrix(TPR2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+          cl.lim = c(4.5, 28), cl.pos = "b")
+corrplot( as.matrix(TNR2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+          cl.lim = c(2, 17.5), cl.pos = "b")
+dev.off()
+
+##############################
+### Shadow canopy validation 
+
+AUC <- read.table("clipboard", header=T)
+kappa <- read.table("clipboard", header=T)
+TPR <- read.table("clipboard", header=T)
+TNR <- read.table("clipboard", header=T)
+# CV
+AUC2 <- read.table("clipboard", header=T)
+kappa2 <- read.table("clipboard", header=T)
+TPR2 <- read.table("clipboard", header=T)
+TNR2 <- read.table("clipboard", header=T)
+
+### plot 
+x11()
+svg(file = "Figures/corrplot_median_shadow.svg", width=12, height=6)
+par(mfrow=c(1,4))
+corrplot( as.matrix(AUC), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+          cl.lim = c(0.2, .9), cl.pos = "b")
+corrplot( as.matrix(kappa), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+          cl.lim = c(0, .3), cl.pos = "b")
+corrplot( as.matrix(TPR), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+          cl.lim = c(0.1, 1), cl.pos = "b")
+corrplot( as.matrix(TNR), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+          cl.lim = c(0, 1), cl.pos = "b")
+dev.off()
+
+x11()
+svg(file = "Figures/corrplot_shadow_cv.svg", width=12, height=6)
+par(mfrow=c(1,4))
+corrplot( as.matrix(AUC2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+          cl.lim = c(2, 13), cl.pos = "b")
+corrplot( as.matrix(kappa2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+          cl.lim = c(15, 205), cl.pos = "b")
+corrplot( as.matrix(TPR2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+          cl.lim = c(18, 115), cl.pos = "b")
+corrplot( as.matrix(TNR2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+          cl.lim = c(4, 225), cl.pos = "b")
+dev.off()
+##############################
+
+
+## plot functions;  n: 1 = overall, 2 = sunny, 3 = shadows
+plot_bean <- function(eval1, eval2, n, xlab="Kappa", ylim=c(0,1), ...){ 
+  
+  library(beanplot)
+  # get accuracies
+  getAcc_matrix <- function(eval, n){ 
+    data = matrix(nrow = 100, ncol = length(eval))
+    for (i in 1:length(eval)){
+      data[,i] = eval[[i]][[n]] 
+    }
+    colnames(data) <-  c("rgb", "texture", "struct", "hyper", "strcttext", "structrgb",
+                         "structhyper", "textrgb", "texthyper",
+                         "structextrgb", "structexthyper")
+    stack(as.data.frame(data)) 
+  }
+  
+  data = data.frame(getAcc_matrix(eval1, n=n), getAcc_matrix(eval2, n=n)[[1]])
+  names(data) = c("all", "label", "sunny")
+  # Plot the accuracies distribution
+  par( mai = c(1, 1.3, 0.5, 0.5) )
+  beanplot(all ~ label, data=data, las=1, horizontal=T, side="first", ll=NA, beanlines="median", border = NA,
+           col="darkolivegreen", what = c(FALSE, TRUE, TRUE, TRUE), xlab=xlab, ylim=ylim, log="")
+  beanplot(sunny ~ label, data=data, las=1, horizontal=T, side="second", ll=NA, beanlines="median", border = NA,
+           col="darkolivegreen1", what = c(FALSE, TRUE, TRUE, TRUE), add=T)
+  grid()
+  # plot median values 
+  lines( x=aggregate(data$all, list(data$label), median)$x, y=seq(1,11,1), lty=1, lwd=2, las=2 )
+  lines( x=aggregate(data$sunny, list(data$label), median)$x, y=seq(1,11,1), lty=2, lwd=2, las=2 )
+  legend("bottomleft", legend = c("Overall", "Sunny"), fill=c("darkolivegreen", "darkolivegreen1"), 
+         lty=c(1,2), lwd=2, bty="n")
+}
+
+## save plots
+# AUC
+svg(file = "Figures/AUC_acacia_.svg", width=7, height=6)
+plot_bean(eval_acacia$AUC, eval_acacia2$AUC, n=1, xlab="AUC", ylim=c(0.6, 0.9))
+dev.off()
+svg(file = "Figures/AUC_ulex_all.svg", width=7, height=6)
+plot_bean(eval_ulex$AUC, eval_ulex2$AUC, n=1, xlab="AUC", ylim=c(0.6, 0.9))
+dev.off()
+svg(file = "Figures/AUC_pinus_all.svg", width=7, height=6)
+plot_bean(eval_pinus$AUC, eval_pinus2$AUC, n=1, xlab="AUC", ylim=c(0, 0.9))
+dev.off()
+
+# Kappa
+svg(file = "Figures/Kappa_acacia_all.svg", width=7, height=6)
+plot_bean(eval_acacia$Kappa, eval_acacia2$Kappa, n=1, xlab="Kappa", ylim=c(0, 0.6))
+dev.off()
+svg(file = "Figures/Kappa_ulex_all.svg", width=7, height=6)
+plot_bean(eval_ulex$Kappa, eval_ulex2$Kappa, n=1, xlab="Kappa", ylim=c(0, 0.6))
+dev.off()
+svg(file = "Figures/Kappa_pinus_all.svg", width=7, height=6)
+plot_bean(eval_pinus$Kappa, eval_pinus2$Kappa, n=1, xlab="Kappa", ylim=c(0, 0.6))
+dev.off()
+
+# TPR
+svg(file = "Figures/TPR_acacia_all.svg", width=7, height=6)
+plot_bean(eval_acacia$TPR, eval_acacia2$TPR, n=1, xlab="TPR", ylim=c(0.3, 1))
+dev.off()
+svg(file = "Figures/TPR_ulex_all.svg", width=7, height=6)
+plot_bean(eval_ulex$TPR, eval_ulex2$TPR, n=1, xlab="TPR", ylim=c(0.3, 1))
+dev.off()
+svg(file = "Figures/TPR_pinus_all.svg", width=7, height=6)
+plot_bean(eval_pinus$TPR, eval_pinus2$TPR, n=1, xlab="TPR", ylim=c(0.3, 1))
+dev.off()
+
+# TNR
+svg(file = "Figures/TNR_acacia_all.svg", width=7, height=6)
+plot_bean(eval_acacia$TNR, eval_acacia2$TNR, n=1, xlab="TNR", ylim=c(0.4, .9))
+dev.off()
+svg(file = "Figures/TNR_ulex_all.svg", width=7, height=6)
+plot_bean(eval_ulex$TNR, eval_ulex2$TNR, n=1, xlab="TNR", ylim=c(0.4, .9))
+dev.off()
+svg(file = "Figures/TNR_pinus_all.svg", width=7, height=6)
+plot_bean(eval_pinus$TNR, eval_pinus2$TNR, n=1, xlab="TNR", ylim=c(0.4, .9))
+dev.off()
+
+##############################
+### plot varImp
+
+library(ggplot2)
+library(gridExtra)
+
+x11()
+p1 = ggplot(imp_acacia_dat, aes(x=var, y=imp_all))+
+  labs(title = "A. dealbata overall", x="Variables", y = "Importance")+
+  geom_bar(stat="identity", aes(fill = type))+
+  scale_fill_brewer(palette="Greens") + theme_classic()+
+  geom_errorbar(aes(ymin=imp_all-imp_all_sd, ymax=imp_all+imp_all_sd), width=.2,
+                position=position_dodge(.9))+
+  theme(axis.text.x = element_text(angle = 25, hjust = 1),axis.text.y=element_text(size=14),
+        text=element_text(size=15), plot.title = element_text(size=18, hjust = .5))
+
+p2 = ggplot(imp_acacia_dat, aes(x=var, y=imp_sunny))+
+  labs(title="A. dealbata sunny",x="Variables", y = "Importance")+
+  geom_bar(stat="identity", aes(fill = type))+
+  scale_fill_brewer(palette="Greens") + theme_classic()+
+  geom_errorbar(aes(ymin=imp_sunny-imp_sunny_sd, ymax=imp_sunny+imp_sunny_sd), width=.2,
+                position=position_dodge(.9))+
+  theme(axis.text.x = element_text(angle = 25, hjust = 1),axis.text.y=element_text(size=14),
+        text=element_text(size=15), plot.title = element_text(size=18, hjust = .5))
+
+
+p3 = ggplot(imp_ulex_dat, aes(x=var, y=imp_all))+
+  labs(title="U. europaeus overall", x="Variables", y = "Importance")+
+  geom_bar(stat="identity", aes(fill = type))+
+  scale_fill_brewer(palette="Greens") + theme_classic()+
+  geom_errorbar(aes(ymin=imp_all-imp_all_sd, ymax=imp_all+imp_all_sd), width=.2,
+                position=position_dodge(.9))+
+  theme(axis.text.x = element_text(angle = 25, hjust = 1),axis.text.y=element_text(size=14),
+        text=element_text(size=15), plot.title = element_text(size=18, hjust = .5))
+
+
+p4 = ggplot(imp_ulex_dat, aes(x=var, y=imp_sunny))+
+  labs(title = "U. europaeus sunny", x="Variables", y = "Importance")+
+  geom_bar(stat="identity", aes(fill = type))+
+  scale_fill_brewer(palette="Greens") + theme_classic()+
+  geom_errorbar(aes(ymin=imp_sunny-imp_sunny_sd, ymax=imp_sunny+imp_sunny_sd), width=.2,
+                position=position_dodge(.9))+
+  theme(axis.text.x = element_text(angle = 25, hjust = 1),axis.text.y=element_text(size=14),
+        text=element_text(size=15), plot.title = element_text(size=18, hjust = .5))
+
+p5 = ggplot(imp_pinus_dat, aes(x=var, y=imp_all))+
+  labs(title="P. radiata overall", x="Variables", y = "Importance")+
+  geom_bar(stat="identity", aes(fill = type))+
+  scale_fill_brewer(palette="Greens") + theme_classic()+
+  geom_errorbar(aes(ymin=imp_all-imp_all_sd, ymax=imp_all+imp_all_sd), width=.2,
+                position=position_dodge(.9))+
+  theme(axis.text.x = element_text(angle = 25, hjust = 1),axis.text.y=element_text(size=14),
+        text=element_text(size=15), plot.title = element_text(size=18, hjust = .5))
+
+
+p6 = ggplot(imp_pinus_dat, aes(x=var, y=imp_sunny))+
+  labs(title = "P. radiata sunny", x="Variables", y = "Importance")+
+  geom_bar(stat="identity", aes(fill = type))+
+  scale_fill_brewer(palette="Greens") + theme_classic()+
+  geom_errorbar(aes(ymin=imp_sunny-imp_sunny_sd, ymax=imp_sunny+imp_sunny_sd), width=.2,
+                position=position_dodge(.9))+
+  theme(axis.text.x = element_text(angle = 25, hjust = 1),axis.text.y=element_text(size=14),
+        text=element_text(size=15), plot.title = element_text(size=18, hjust = .5))
+
+out <- grid.arrange(p1, p2, p3, p4, p5, p6, nrow=3, ncol=2) 
+
+ggsave("Figures/varImport.svg", out, width = 10, height = 15)
