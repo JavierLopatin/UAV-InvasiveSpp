@@ -583,6 +583,7 @@ acacia_med_img_sunny <- list()
 acacia_cv_img_sunny <- list()
 
 for (i in 1:length(listNames)){
+  print(i)
   img <- loadRaster( list_acacia[ grep(paste0("/",listNames[[i]],"_"), list_acacia) ] )
   acacia_med_img_all[[i]] <- img$median_all
   acacia_med_img_sunny[[i]] <- img$median_sunny
