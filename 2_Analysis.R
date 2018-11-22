@@ -3,11 +3,11 @@
 ################################################################################
 ## R-Script - 2_Analysis.R                                                    ##
 ## author: Javier Lopatin                                                     ##
-## mail: javierlopatin@gmail.com                                              ##  
+## mail: javierlopatin@gmail.com                                              ##
 ##                                                                            ##
 ## Manuscript: Example scripts of the modeling approach for the Acacia flight ##
 ##                                                                            ##
-## description: MaxEnt classification storing of bootstrap distributions      ## 
+## description: MaxEnt classification storing of bootstrap distributions      ##
 ##                                                                            ##
 ################################################################################
 
@@ -22,8 +22,8 @@ library("dismo")
 ### Functions
 
 # Function to obtain model accuracies
-getACC <- function(eval){ 
-  # accuracies 
+getACC <- function(eval){
+  # accuracies
   auc <- eval@auc
   kappa <- max(eval@kappa)
   TPR <- eval@TPR[which.max( eval@kappa )]
@@ -32,12 +32,12 @@ getACC <- function(eval){
   num <- (mat[1]*mat[4])-(mat[3]*mat[2])
   den <- (mat[1]+mat[2])*(mat[3]+mat[4])
   tss <- num/den
-  
+
   # prepare output
   out <- list(auc, kappa, TPR, TNR, tss)
   names(out) <- c("AUC", "Kappa", "TPR", "TNR", "TSS")
   out
-  
+
 }
 
 # Functions to iterate through a list of eveluations for the overall models
@@ -61,7 +61,7 @@ iterList_all <- function(listname, model="all"){
       out <- getACC(eval_shadow)
     }
     auc[i] <- out$AUC
-    kappa[i] <- out$Kappa 
+    kappa[i] <- out$Kappa
     TPR[i] <- out$TPR
     TNR[i] <- out$TNR
     tss[i] <- out$TSS
@@ -92,7 +92,7 @@ iterList_sunny <- function(listname, model="all"){
       out <- getACC(eval_shadow2)
     }
     auc[i] <- out$AUC
-    kappa[i] <- out$Kappa 
+    kappa[i] <- out$Kappa
     TPR[i] <- out$TPR
     TNR[i] <- out$TNR
     tss[i] <- out$TSS
@@ -103,16 +103,16 @@ iterList_sunny <- function(listname, model="all"){
 }
 
 # function to iterate th through all models (overall, sunny and shadow)
-GetAllAcc <- function(pattern, model="all"){ 
-  
+GetAllAcc <- function(pattern, model="all"){
+
   # list of files matching the pattern
   if (model == "all"){
-    listt <- list.files("H:/results2/eval/all/", pattern=pattern, full.names = T)  
+    listt <- list.files("H:/results2/eval/all/", pattern=pattern, full.names = T)
   }
   if (model == "sunny"){
-    listt <- list.files("H:/results2/eval/sunny/", pattern=pattern, full.names = T)  
+    listt <- list.files("H:/results2/eval/sunny/", pattern=pattern, full.names = T)
   }
- 
+
   listNames <- c("rgb_", "texture", "struct_", "hyper_", "strcttext_", "structrgb_",
                  "structhyper_", "textrgb_", "texthyper_",
                  "structextrgb_", "structexthyper_")
@@ -123,17 +123,17 @@ GetAllAcc <- function(pattern, model="all"){
   TNR <- list()
   tss <- list()
   if (model == "all"){
-    for (i in 1:length(listNames)){ 
+    for (i in 1:length(listNames)){
       # all
       all <- listt[ grep(paste0("^", paste0("H:/results2/eval/all/", listNames[[i]]) ), listt) ]
       all <- sort(all)
       # overall
       all1 <- all[ -grep(paste(c("sunny", "shadows"), collapse = "|"), basename(all)) ]
       all1_acc <- iterList_all(all1, "all")
-      # sunny 
+      # sunny
       all2 <- all[ grep("sunny",  basename(all)) ]
       all2_acc <- iterList_all(all2, model = "sunny")
-      # shadows 
+      # shadows
       all3 <- all[ grep("shadows",  basename(all)) ]
       all3_acc <- iterList_all(all3, model = "shadows")
       # accuracies
@@ -144,19 +144,19 @@ GetAllAcc <- function(pattern, model="all"){
       tss[[i]]       <- list(all1_acc$TSS, all2_acc$TSS, all3_acc$TSS)
     }
   }
-  
+
   if (model == "sunny"){
-    for (i in 1:length(listNames)){ 
+    for (i in 1:length(listNames)){
       # all
       all <- listt[ grep(paste0("^", paste0("H:/results2/eval/sunny/", listNames[[i]]) ), listt) ]
       all <- sort(all)
       # overall
       all1 <- all[ -grep(paste(c("sunny", "shadows"), collapse = "|"), basename(all)) ]
       all1_acc <- iterList_sunny(all1, "all")
-      # sunny 
+      # sunny
       all2 <- all[ grep("sunny",  basename(all)) ]
       all2_acc <- iterList_sunny(all2, model = "sunny")
-      # shadows 
+      # shadows
       all3 <- all[ grep("shadows",  basename(all)) ]
       all3_acc <- iterList_sunny(all3, model = "shadows")
       # accuracies
@@ -167,8 +167,8 @@ GetAllAcc <- function(pattern, model="all"){
       tss[[i]]       <- list(all1_acc$TSS, all2_acc$TSS, all3_acc$TSS)
     }
   }
-  
-  
+
+
   output <- list(auc, kappa, TPR, TNR, tss)
   names(output) <- c("AUC", "Kappa", "TPR", "TNR", "TSS")
   output
@@ -187,17 +187,17 @@ eval_ulex2 <- GetAllAcc("ulex", model="sunny")
 eval_pinus2 <- GetAllAcc("pinus", model="sunny")
 
 
-### Comparison between overall, sunny and shadow 
+### Comparison between overall, sunny and shadow
 
 # function to obtain the median and CV of the distribution of values
-getValues <- function(eval1, eval2, x){ 
+getValues <- function(eval1, eval2, x){
   doo <- function(eval, x){
     AUC = matrix(nrow = 11, ncol = 2); colnames(AUC) <- c("median", "CV")
     kappa = matrix(nrow = 11, ncol = 2); colnames(kappa) <- c("median", "CV")
     TPR = matrix(nrow = 11, ncol = 2); colnames(TPR) <- c("median", "CV")
     TNR = matrix(nrow = 11, ncol = 2); colnames(TNR) <- c("median", "CV")
-    
-    for (i in 1:11){ 
+
+    for (i in 1:11){
        AUC[i,1] = median(eval[[1]][[i]][[x]])
        AUC[i,2] = cv(eval[[1]][[i]][[x]])
        kappa[i,1] = median(eval[[2]][[i]][[x]])
@@ -207,16 +207,16 @@ getValues <- function(eval1, eval2, x){
        TNR[i,1] = median(eval[[4]][[i]][[x]])
        TNR[i,2] = cv(eval[[4]][[i]][[x]])
     }
-    
+
     out <- list(AUC, kappa, TPR, TNR)
-  
+
     med = matrix(nrow=11, ncol=4)
     cv = matrix(nrow=11, ncol=4)
     for (i in 1:length(out)){
       med[,i] = out[[i]][,1]
       cv[,i] = out[[i]][,2]
     }
-    
+
   list(med, cv)
 
   }
@@ -238,7 +238,7 @@ getValues <- function(eval1, eval2, x){
                         "structextrgb", "structexthyper")
   colnames(med) <- c("AUC1", "AUC2", "Kappa1", "Kappa2", "TPR1", "TPR2","TNR1","TNR2")
   colnames(cv) <- c("AUC1", "AUC2", "Kappa1", "Kappa2", "TPR1", "TPR2","TNR1","TNR2")
-  
+
   out <- list(med, cv); names(out) <- c("med", "cv")
   out
   }
@@ -284,9 +284,9 @@ pinusValues_shadow$cv
 
 
 #############
-# get variable importance 
+# get variable importance
 
-GetVarImp <- function(pattern, pattern2="structexthyper", model="all"){ 
+GetVarImp <- function(pattern, pattern2="structexthyper", model="all"){
   setwd("H:/results2")
   # list of files matching the pattern
   if (model == "all"){
@@ -295,25 +295,25 @@ GetVarImp <- function(pattern, pattern2="structexthyper", model="all"){
     load(listt[[1]])
     imp = matrix(nrow=length(listt), ncol=length(fit@results[grep("permutation", rownames(fit@results))]) )
     colnames(imp) = rownames(fit@results)[grep("permutation", rownames(fit@results))]
-    for (i in 1:length(listt)){ 
+    for (i in 1:length(listt)){
       load(listt[[i]])
       p = fit@results[ grep("permutation", rownames(fit@results)) ]
       imp[i,] <- p
       }
   }
   if (model == "sunny"){
-    listt <- list.files("models/sunny/", pattern=pattern, full.names = T) 
+    listt <- list.files("models/sunny/", pattern=pattern, full.names = T)
     listt <- listt[ grep(pattern2, listt) ]
     load(listt[[1]])
     imp = matrix(nrow=length(listt), ncol=length(fit2@results[grep("permutation", rownames(fit2@results))]) )
     colnames(imp) = rownames(fit2@results)[grep("permutation", rownames(fit2@results))]
-    for (i in 1:length(listt)){ 
+    for (i in 1:length(listt)){
       load(listt[[i]])
       p = fit2@results[ grep("permutation", rownames(fit2@results)) ]
       imp[i,] <- p
       }
   }
-  
+
   imp
 }
 
@@ -322,30 +322,30 @@ imp_acacia2 <- GetVarImp(pattern="acacia", model="sunny")
 imp_ulex <- GetVarImp(pattern="ulex", model="all")
 imp_ulex2 <- GetVarImp(pattern="ulex", model="sunny")
 imp_pinus <- GetVarImp(pattern="pinus", model="all")
-imp_pinus2 <- GetVarImp(pattern="pinus", model="sunny") 
+imp_pinus2 <- GetVarImp(pattern="pinus", model="sunny")
 
 imp_acacia_dat = data.frame(var = colnames(imp_acacia),
-                            imp_all = apply(imp_acacia, 2, FUN = median), 
+                            imp_all = apply(imp_acacia, 2, FUN = median),
                             imp_sunny = apply(imp_acacia2, 2, FUN = median),
-                            imp_all_sd = apply(imp_acacia, 2, FUN = sd), 
+                            imp_all_sd = apply(imp_acacia, 2, FUN = sd),
                             imp_sunny_sd = apply(imp_acacia2, 2, FUN = sd),
                             type=c("Spectral","Spectral","Structure","Structure","Structure",
                                    "Structure","Texture","Texture","Texture","Texture","Texture"))
 imp_acacia_dat$var <- gsub("*.permutation.importance","", rownames(imp_acacia_med) )
 
 imp_ulex_dat = data.frame(var = colnames(imp_ulex),
-                          imp_all = apply(imp_ulex, 2, FUN = median), 
+                          imp_all = apply(imp_ulex, 2, FUN = median),
                           imp_sunny = apply(imp_ulex2, 2, FUN = median),
-                          imp_all_sd = apply(imp_ulex, 2, FUN = sd), 
+                          imp_all_sd = apply(imp_ulex, 2, FUN = sd),
                           imp_sunny_sd = apply(imp_ulex2, 2, FUN = sd),
                           type=c("Spectral","Spectral","Spectral","Spectral","Structure",
                                  "Structure","Texture","Texture","Texture","Texture"))
 imp_ulex_dat$var <- gsub("*.permutation.importance","", rownames(imp_ulex_med))
 
 imp_pinus_dat = data.frame(var = colnames(imp_pinus),
-                           imp_all = apply(imp_pinus, 2, FUN = median), 
+                           imp_all = apply(imp_pinus, 2, FUN = median),
                            imp_sunny = apply(imp_pinus2, 2, FUN = median),
-                           imp_all_sd = apply(imp_pinus, 2, FUN = sd), 
+                           imp_all_sd = apply(imp_pinus, 2, FUN = sd),
                            imp_sunny_sd = apply(imp_pinus2, 2, FUN = sd),
                            type=c("Spectral","Spectral","Spectral","Spectral",
                                   "Structure","Structure","Texture",
@@ -358,10 +358,10 @@ imp_pinus_dat$var <- gsub("*.permutation.importance","", rownames(imp_pinus_med)
 
 #### First test
 
-# Differences between sunlit and shadows. 
+# Differences between sunlit and shadows.
 # Assuming that accuracies in subnlit areas are higher than in shaded areas
 significanceTest <- function(model){
-  
+
   listNames <- c("rgb", "texture", "struct", "hyper", "strcttext", "structrgb",
                  "structhyper", "textrgb", "texthyper",
                  "structextrgb", "structexthyper")
@@ -372,10 +372,10 @@ significanceTest <- function(model){
     kappa <- model$Kappa[[j]][[2]] - model$Kappa[[j]][[3]]
     TPR <- model$TPR[[j]][[2]] - model$TPR[[j]][[3]]
     TNR <- model$TNR[[j]][[2]] - model$TNR[[j]][[3]]
-    
+
     # prepare output
     output <- list(AUC, kappa, TPR, TNR)
-    
+
     # matrix of significances
     a = matrix(nrow = length(output), ncol = 3)
     colnames(a) <- c("0.1", "0.05", "0.001")
@@ -420,7 +420,7 @@ significanceTest(eval_pinus2)
 # Differences between including or excluding shadows from the calibration data
 # x: type of evaluation (1=overall; 2=sunny; 3=shadows)
 significanceTest2 <- function(model1, model2, x){
-  
+
   listNames <- c("rgb", "texture", "struct", "hyper", "strcttext", "structrgb",
                  "structhyper", "textrgb", "texthyper",
                  "structextrgb", "structexthyper")
@@ -431,10 +431,10 @@ significanceTest2 <- function(model1, model2, x){
     kappa <- model2$Kappa[[j]][[x]] - model1$Kappa[[j]][[x]]
     TPR <- model2$TPR[[j]][[x]] - model1$TPR[[j]][[x]]
     TNR <- model2$TNR[[j]][[x]] - model1$TNR[[j]][[x]]
-    
+
     # prepare output
     output <- list(AUC, kappa, TPR, TNR)
-    
+
     # matrix of significances
     a = matrix(nrow = length(output), ncol = 3)
     colnames(a) <- c("0.1", "0.05", "0.001")
@@ -477,10 +477,10 @@ significanceTest2(eval_pinus, eval_pinus2, 3)
 
 ### significance test between models
 combn(seq(1,11,1),2)
-significance_models <- function(model, x){ 
+significance_models <- function(model, x){
   # see all possible combinations
   combinations = combn(seq(1,11,1),2)
-  
+
   outall <- list()
   for (j in 1:ncol(combinations)){
     # bootstrap pair diferences
@@ -488,10 +488,10 @@ significance_models <- function(model, x){
     kappa <- model$Kappa[[combinations[,j][1]]][[x]] - model$Kappa[[combinations[,j][2]]][[x]]
     TPR <- model$TPR[[combinations[,j][1]]][[x]] - model$TPR[[combinations[,j][2]]][[x]]
     TNR <- model$TNR[[combinations[,j][1]]][[x]] - model$TNR[[combinations[,j][2]]][[x]]
-    
+
     # prepare output
     output <- list(AUC, kappa, TPR, TNR)
-    
+
     # matrix of significances
     a = matrix(nrow = length(output), ncol = 3)
     colnames(a) <- c("0.1", "0.05", "0.001")
@@ -553,7 +553,7 @@ pinus_models_test[grep("10", acacia_models_test[,5]),]
 ###############################
 ## maps
 
-listt <- list.files("H:/results2/preds", full.names = T)  
+listt <- list.files("H:/results2/preds", full.names = T)
 
 list_acacia <- listt[ grep("acacia", listt) ]
 list_ulex <- listt[ grep("ulex", listt) ]
@@ -564,7 +564,7 @@ listNames <- c("rgb", "texture", "struct", "hyper", "strcttext", "structrgb",
                "structextrgb", "structexthyper")
 
 loadRaster <- function(object){
-  load(object) 
+  load(object)
   beginCluster(2)
   med1 <- clusterR( stack(pred_out[[1]]), function(x) calc(x, median) )
   med2 <- clusterR( stack(pred_out[[2]]), function(x) calc(x, median) )
@@ -636,15 +636,15 @@ save.image("Analysis.RData")
 ###############################
 ## Obtain binary maps accordint to Kappa's threshold
 
-getBinaryClassification <- function(pattern, model="all"){ 
+getBinaryClassification <- function(pattern, model="all"){
   # list of files matching the pattern
   if (model == "all"){
-    list_models <- list.files("H:/results2/eval/all/", pattern=pattern, full.names = T) 
+    list_models <- list.files("H:/results2/eval/all/", pattern=pattern, full.names = T)
   }
   if (model == "sunny"){
-    list_models <- list.files("H:/results2/eval/sunny/", pattern=pattern, full.names = T) 
+    list_models <- list.files("H:/results2/eval/sunny/", pattern=pattern, full.names = T)
   }
-  list_models <- list_models [ grep("sunny", basename(list_models)) ] 
+  list_models <- list_models [ grep("sunny", basename(list_models)) ]
 
   # obtain thresholds
   thr <- numeric()
@@ -652,13 +652,13 @@ getBinaryClassification <- function(pattern, model="all"){
     load(list_models[[i]])
     thr[i] <- threshold(eval_sunny)[[1]]
   }
-  
+
   # apply threshold to the predictions
   list_img = list.files("H:/results2/preds/", full.names = T)
   img = grep(pattern, list_img)
   load(list_img[[img]])
   img_stack = list()
-  for (i in 1:100){ 
+  for (i in 1:100){
     if (model == "all"){
       pred = pred_out[[1]][[i]]
       pred[ pred < thr[i] ] <- 0; pred[ pred > thr[i] ] <- 1
@@ -675,10 +675,10 @@ getBinaryClassification <- function(pattern, model="all"){
   img_summe <- calc(img_stack, fun = sum)
 
   return(img_summe)
-  
+
 }
 
-
+# run the funtion
 thr_acacia <- getBinaryClassification("structextrgb_acacia_f1", model="all")
 thr_ulex   <- getBinaryClassification("hyper_ulex_f3", model="all")
 thr_pinus  <- getBinaryClassification("structextrgb_pinus_f8", model="all")
@@ -687,7 +687,17 @@ thr_acacia2 <- getBinaryClassification("structextrgb_acacia_f1", model="sunny")
 thr_ulex2   <- getBinaryClassification("hyper_ulex_f3", model="sunny")
 thr_pinus2  <- getBinaryClassification("structextrgb_pinus_f8", model="sunny")
 
+# count percentage of invasive species in the scenes. Over 50% of bootstrap occurence
+pos_count = function(x){
+  all = length(which(!is.na(values(x))))
+  pos = length(which( values(x) >= 50 ))
+  return((pos/all)*100)
+}
+pos_count(thr_acacia2)
+pos_count(thr_ulex2)
+pos_count(thr_pinus2)
 
+# save binary maps to disk
 writeRaster(thr_acacia, filename = "H:/results2/bin_acacia_all.tif", format="GTiff", overwrite=T)
 writeRaster(thr_acacia2, filename = "H:/results2/bin_acacia_sunny.tif", format="GTiff", overwrite=T)
 
@@ -697,7 +707,6 @@ writeRaster(thr_ulex2, filename = "H:/results2/bin_ulex_sunny.tif", format="GTif
 writeRaster(thr_pinus, filename = "H:/results2/bin_pinus_all.tif", format="GTiff", overwrite=T)
 writeRaster(thr_pinus2, filename = "H:/results2/bin_pinus_sunny.tif", format="GTiff", overwrite=T)
 
-
 #############
 ### Plots ###
 #############
@@ -706,7 +715,7 @@ writeRaster(thr_pinus2, filename = "H:/results2/bin_pinus_sunny.tif", format="GT
 library(corrplot)
 
 ##############################
-### Sunny canopy validation 
+### Sunny canopy validation
 
 AUC <- read.table("clipboard", header=T)
 kappa <- read.table("clipboard", header=T)
@@ -718,35 +727,35 @@ kappa2 <- read.table("clipboard", header=T)
 TPR2 <- read.table("clipboard", header=T)
 TNR2 <- read.table("clipboard", header=T)
 
-### plot 
+### plot
 x11()
 svg(file = "Figures/corrplot_median1.svg", width=12, height=6)
 par(mfrow=c(1,4))
-corrplot( as.matrix(AUC), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+corrplot( as.matrix(AUC), method = "circle", is.corr=F, col=color(100), tl.col="black",
           cl.lim = c(0.6, .9), cl.pos = "b")
-corrplot( as.matrix(kappa), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+corrplot( as.matrix(kappa), method = "circle", is.corr=F, col=color(100), tl.col="black",
           cl.lim = c(.35, .75), cl.pos = "b")
-corrplot( as.matrix(TPR), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+corrplot( as.matrix(TPR), method = "circle", is.corr=F, col=color(100), tl.col="black",
           cl.lim = c(0.5, .9), cl.pos = "b")
-corrplot( as.matrix(TNR), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+corrplot( as.matrix(TNR), method = "circle", is.corr=F, col=color(100), tl.col="black",
           cl.lim = c(0.5, .9), cl.pos = "b")
 dev.off()
 
 x11()
 svg(file = "Figures/corrplot_cv.svg", width=12, height=6)
 par(mfrow=c(1,4))
-corrplot( as.matrix(AUC2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+corrplot( as.matrix(AUC2), method = "circle", is.corr=F, col=color(100), tl.col="black",
           cl.lim = c(1, 3.3), cl.pos = "b")
-corrplot( as.matrix(kappa2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+corrplot( as.matrix(kappa2), method = "circle", is.corr=F, col=color(100), tl.col="black",
           cl.lim = c(4, 17), cl.pos = "b")
-corrplot( as.matrix(TPR2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+corrplot( as.matrix(TPR2), method = "circle", is.corr=F, col=color(100), tl.col="black",
           cl.lim = c(4.5, 28), cl.pos = "b")
-corrplot( as.matrix(TNR2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+corrplot( as.matrix(TNR2), method = "circle", is.corr=F, col=color(100), tl.col="black",
           cl.lim = c(2, 17.5), cl.pos = "b")
 dev.off()
 
 ##############################
-### Shadow canopy validation 
+### Shadow canopy validation
 
 AUC <- read.table("clipboard", header=T)
 kappa <- read.table("clipboard", header=T)
@@ -758,51 +767,51 @@ kappa2 <- read.table("clipboard", header=T)
 TPR2 <- read.table("clipboard", header=T)
 TNR2 <- read.table("clipboard", header=T)
 
-### plot 
+### plot
 x11()
 svg(file = "Figures/corrplot_median_shadow.svg", width=12, height=6)
 par(mfrow=c(1,4))
-corrplot( as.matrix(AUC), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+corrplot( as.matrix(AUC), method = "circle", is.corr=F, col=color(100), tl.col="black",
           cl.lim = c(0.2, .9), cl.pos = "b")
-corrplot( as.matrix(kappa), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+corrplot( as.matrix(kappa), method = "circle", is.corr=F, col=color(100), tl.col="black",
           cl.lim = c(0, .3), cl.pos = "b")
-corrplot( as.matrix(TPR), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+corrplot( as.matrix(TPR), method = "circle", is.corr=F, col=color(100), tl.col="black",
           cl.lim = c(0.1, 1), cl.pos = "b")
-corrplot( as.matrix(TNR), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+corrplot( as.matrix(TNR), method = "circle", is.corr=F, col=color(100), tl.col="black",
           cl.lim = c(0, 1), cl.pos = "b")
 dev.off()
 
 x11()
 svg(file = "Figures/corrplot_shadow_cv.svg", width=12, height=6)
 par(mfrow=c(1,4))
-corrplot( as.matrix(AUC2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+corrplot( as.matrix(AUC2), method = "circle", is.corr=F, col=color(100), tl.col="black",
           cl.lim = c(2, 13), cl.pos = "b")
-corrplot( as.matrix(kappa2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+corrplot( as.matrix(kappa2), method = "circle", is.corr=F, col=color(100), tl.col="black",
           cl.lim = c(15, 205), cl.pos = "b")
-corrplot( as.matrix(TPR2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+corrplot( as.matrix(TPR2), method = "circle", is.corr=F, col=color(100), tl.col="black",
           cl.lim = c(18, 115), cl.pos = "b")
-corrplot( as.matrix(TNR2), method = "circle", is.corr=F, col=color(100), tl.col="black", 
+corrplot( as.matrix(TNR2), method = "circle", is.corr=F, col=color(100), tl.col="black",
           cl.lim = c(4, 225), cl.pos = "b")
 dev.off()
 ##############################
 
 
 ## plot functions;  n: 1 = overall, 2 = sunny, 3 = shadows
-plot_bean <- function(eval1, eval2, n, xlab="Kappa", ylim=c(0,1), ...){ 
-  
+plot_bean <- function(eval1, eval2, n, xlab="Kappa", ylim=c(0,1), ...){
+
   library(beanplot)
   # get accuracies
-  getAcc_matrix <- function(eval, n){ 
+  getAcc_matrix <- function(eval, n){
     data = matrix(nrow = 100, ncol = length(eval))
     for (i in 1:length(eval)){
-      data[,i] = eval[[i]][[n]] 
+      data[,i] = eval[[i]][[n]]
     }
     colnames(data) <-  c("rgb", "texture", "struct", "hyper", "strcttext", "structrgb",
                          "structhyper", "textrgb", "texthyper",
                          "structextrgb", "structexthyper")
-    stack(as.data.frame(data)) 
+    stack(as.data.frame(data))
   }
-  
+
   data = data.frame(getAcc_matrix(eval1, n=n), getAcc_matrix(eval2, n=n)[[1]])
   names(data) = c("all", "label", "sunny")
   # Plot the accuracies distribution
@@ -812,10 +821,10 @@ plot_bean <- function(eval1, eval2, n, xlab="Kappa", ylim=c(0,1), ...){
   beanplot(sunny ~ label, data=data, las=1, horizontal=T, side="second", ll=NA, beanlines="median", border = NA,
            col="darkolivegreen1", what = c(FALSE, TRUE, TRUE, TRUE), add=T)
   grid()
-  # plot median values 
+  # plot median values
   lines( x=aggregate(data$all, list(data$label), median)$x, y=seq(1,11,1), lty=1, lwd=2, las=2 )
   lines( x=aggregate(data$sunny, list(data$label), median)$x, y=seq(1,11,1), lty=2, lwd=2, las=2 )
-  legend("bottomleft", legend = c("Overall", "Sunny"), fill=c("darkolivegreen", "darkolivegreen1"), 
+  legend("bottomleft", legend = c("Overall", "Sunny"), fill=c("darkolivegreen", "darkolivegreen1"),
          lty=c(1,2), lwd=2, bty="n")
 }
 
@@ -928,6 +937,6 @@ p6 = ggplot(imp_pinus_dat, aes(x=var, y=imp_sunny))+
   theme(axis.text.x = element_text(angle = 25, hjust = 1),axis.text.y=element_text(size=14),
         text=element_text(size=15), plot.title = element_text(size=18, hjust = .5))
 
-out <- grid.arrange(p1, p2, p3, p4, p5, p6, nrow=3, ncol=2) 
+out <- grid.arrange(p1, p2, p3, p4, p5, p6, nrow=3, ncol=2)
 
 ggsave("Figures/varImport.svg", out, width = 10, height = 15)
